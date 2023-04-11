@@ -1,5 +1,5 @@
 Custom Package Installer - Install file example
-This file explains how to format your "install.cpi" file correctly
+This documentation explains how to format your "install.cpi" file correctly
 
 Line 1 : Version (ex.: 2.0.1)
 Line 2 : File that gets executed (ex.: cpi.cmd)
@@ -12,7 +12,7 @@ To indicate that you want to create a new directory, use "cpi-pkgmd" (Ex.: cpi-p
 To indicate that you want to create a new directory, use "cpi-md" (Ex.: cpi-md /example/directory)
 
 3. Download another file from the same Github repository under "%UserProfile%\.cpi\pkg\pkg-name"
-To download a file from the same Github repository, write the file name followed by the location 
+To download a file from the same Github repository, use "cpi-pkgdl" the file name followed by the location 
 where you want to download the file (the directory MUST already exist) (Ex.: img.png /images)
 
 4. Download another file from the internet
