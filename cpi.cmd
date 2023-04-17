@@ -44,43 +44,47 @@ echo.
 echo Input the desired package to install (ex.: profile/repo-name)
 set /p "pkg=Install : "
 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://github.com/%pkg%/raw/main/install.cpi','%UserProfile%\.cpi\tmp\%pkg:/=-%.install.cpi')"
-::Next line makes it crash
-for /f "skip=0 delims=" %i in ("%UserProfile%\.cpi\tmp\%pkg:/=-%.install.cpi") do set "tmpver=%%i"
-if exist "%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi" (for /F "skip=0 delims=" %i in (%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi) do set installedver=%%i)
-if "%installedver%" geq "%tmpver%" (
+<"%UserProfile%\.cpi\tmp\%pkg:/=-%.install.cpi" set /p tmpver=
+set tmpver=%tmpver%
+if exist "%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi" (<"%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi" set /p installedver=) else (set installedver=0)
+if not "%installedver%" geq "%tmpver%" (goto 110)
+echo.
 echo The same or a newer version of "%pkg%" is already installed
 echo Installed : %installedver% ^| Fetched : %tmpver%
-choice /m "Do you want to install it anyways and replace the installed version"
-if %errorlevel% == 255 (goto 10)
-)
+echo Do you want to install it anyways and replace the installed version [Y/N]?
+choice /c yn /n
+if %errorlevel% == 2 goto 10
+goto 11
+
+:110 Skip "Already installed" prompt
 move /y "%UserProfile%\.cpi\tmp\%pkg:/=-%.install.cpi" "%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi"
 for /f "usebackq" %%b in (`type %UserProfile%\.cpi\install\%pkg:/=-%.install.cpi ^| find "" /v /c`) do (set ln=%%b)
 set inc=0
 title Custom Package Installer - Reading and processing "%pkg:/=-%.install.cpi"...
 echo Reading and processing "%pkg:/=-%.install.cpi"...
 
-:110 Read & Process "install.cpi"
+:111 Read & Process "install.cpi"
 set /a "inc+=1"
-for /F "skip=%inc% delims=" %i in (%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi) do set "read=%%i"
-if "%read:~0,6%" == "cpi-md" (md "%read:~7%"&goto 111) ::Make Directory
-if "%read:~0,9%" == "cpi-pkgmd" (md "%UserProfile%\.cpi\pkg\%pkg:/=-%\%read:~10%"&goto 111) ::Make Directory in "%UserProfile%\.cpi\pkg\package-name\"
+for /f "skip=%inc% delims=" %i in (%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi) do set "read=%%i"
+if "%read:~0,6%" == "cpi-md" (md "%read:~7%"&goto 112) ::Make Directory
+if "%read:~0,9%" == "cpi-pkgmd" (md "%UserProfile%\.cpi\pkg\%pkg:/=-%\%read:~10%"&goto 112) ::Make Directory in "%UserProfile%\.cpi\pkg\package-name\"
 if "%read:~0,6%" == "cpi-dl" (
 	set "url=%read:~7%"
 	set /a "inc+=1"
 	for /F "skip=%inc% delims=" %i in (%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi) do set "dir=%%i"
 	powershell -command "(New-Object System.Net.WebClient).DownloadFile('%url%','%dir%')"
-	goto 111
+	goto 112
 	) ::Download from the internet to anywhere
 if "%read:~0,9%" == "cpi-pkgdl" (
 	set "url=%read:~10%"
 	set /a "inc+=1"
 	for /F "skip=%inc% delims=" %i in (%UserProfile%\.cpi\install\%pkg:/=-%.install.cpi) do set "dir=%%i"
 	powershell -command "(New-Object System.Net.WebClient).DownloadFile('%url%','%UserProfile%\.cpi\pkg\%pkg:/=-%\%dir%')"
-	goto 111
+	goto 112
 	) ::Download from the internet to "%UserProfile%\.cpi\pkg\package-name\"
 
-:111 Loop selector
-if not %inc% geq %ln% goto 110
+:112 Loop selector
+if not %inc% geq %ln% goto 111
 echo Finished reading and processing "%pkg:/=-%.install.cpi"
 
 :12 Go back (Home)
